@@ -44,14 +44,14 @@ void main() {
 
   print('JSON file created!');
 
-  for (Book book in book1) {
-    int authorId1 = book.authorId!;
-    Author a1 = author1.firstWhere((a) {
-      return authorId1 == a.id;
-    });
-    print('${book.id}-${book.name} -${a1.firstName}${a1.lastName}');
-  }
-
+  // for (Book book in book1) {
+  //   int authorId1 = book.authorId!;
+  //   Author a1 = author1.firstWhere((a) {
+  //     return authorId1 == a.id;
+  //   });
+  //   print('${book.id}-${book.name} -${a1.firstName}${a1.lastName}');
+  // }
+  printBookAndAuthor(book1, author1);
   while (true) {
     stdout.write('Choose an operation\nAdd:\nRemove:\nEdit:\nSearch:\n Exit: ');
     String operation = stdin.readLineSync()!;
@@ -87,13 +87,14 @@ int addItem(List<Book> book, int id, int authorId, List<Author> author) {
   author.add(Author(id: authorId, firstName: firstName, lastName: lastName));
   book.add(Book(name: name, id: id, authorId: authorId));
   authorId++;
+  printBookAndAuthor(book, author);
+  // for (Book b in book) {
+  //   Author a1 = author.firstWhere((a) {
+  //     return b.authorId == a.id;
+  //   });
+  //   print('${b.id}-${b.name}-${a1.firstName}-${a1.lastName} ');
+  // }
 
-  for (Book b in book) {
-    Author a1 = author.firstWhere((a) {
-      return b.authorId == a.id;
-    });
-    print('${b.id}-${b.name}-${a1.firstName}-${a1.lastName} ');
-  }
   return id + 1;
 }
 
@@ -125,13 +126,14 @@ void editItem(List<Book> book, List<Author> author) {
   result.name = name;
   resultAuthor.firstName = firstName;
   resultAuthor.lastName = lastName;
-  for (Book book in book) {
-    int authorId1 = book.authorId!;
-    Author a1 = author.firstWhere((a) {
-      return authorId1 == a.id;
-    });
-    print('${book.id}-${book.name} -${a1.firstName}${a1.lastName}');
-  }
+  // for (Book book in book) {
+  //   int authorId1 = book.authorId!;
+  //   Author a1 = author.firstWhere((a) {
+  //     return authorId1 == a.id;
+  //   });
+  //   print('${book.id}-${book.name} -${a1.firstName}${a1.lastName}');
+  // }
+  printBookAndAuthor(book, author);
 }
 
 void searchItem(List<Book> book, List<Author> author) {
@@ -161,5 +163,14 @@ void searchItem(List<Book> book, List<Author> author) {
       for (Book book in b1)
         print('${book.id}-${book.name}${a.firstName},${a.lastName}');
     }
+  }
+}
+
+void printBookAndAuthor(List<Book> book, List<Author> author) {
+  for (Book b in book) {
+    Author a1 = author.firstWhere((a) {
+      return b.authorId == a.id;
+    });
+    print('${b.id}-${b.name}-${a1.firstName}-${a1.lastName} ');
   }
 }
