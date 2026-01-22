@@ -92,26 +92,29 @@ void main() {
   // printBookAndAuthor(book1, author1);
   while (true) {
     stdout.write(
-      'Choose an operation\nAdd:\nRemove:\nEdit:\nSearch:\nTransferBook:\n Exit: ',
+      'Choose an operation\nadd:\nremove:\nedit:\nsearch:\neditshelf:\ntransferbook:\n exit: ',
     );
-    String operation = stdin.readLineSync()!;
+    String operation = stdin.readLineSync()!.toLowerCase();
     switch (operation) {
-      case 'Add':
-        addItem(book1, author1);
+      case 'add':
+        addItem(book1, author1, shelf);
         break;
-      case 'Remove':
-        removeItem(book1);
+      case 'remove':
+        removeItem(book1, shelf, author1);
         break;
-      case 'Edit':
+      case 'edit':
         editItem(book1, author1);
         break;
-      case 'Search':
-        searchItem(book1, author1);
+      case 'search':
+        searchItem(book1, author1, shelf);
         break;
-      case 'TransferBook':
+      case 'transferbook':
         transferBookBetweenShelves(shelf, book1, author1);
         break;
-      case 'Exit':
+      case 'editshelf':
+        editShelf(shelf, book1, author1);
+        break;
+      case 'exit':
         return;
       default:
         print('invalid');
@@ -119,12 +122,30 @@ void main() {
   }
 }
 
-void addItem(List<Book> book, List<Author> author) {
+void addItem(List<Book> book, List<Author> author, List<Shelf> shelf) {
+  for (Shelf sh in shelf) {
+    print('Shelf name:${sh.name}');
+  }
+  Shelf selectedShelf;
+  stdout.write('Enter Shelf name or type (add): ');
+  String shelfName = stdin.readLineSync()!;
+  if (shelfName.toLowerCase() == 'add') {
+    int maxmaShelfId = MaxShelfId(shelf);
+    stdout.write('Shelf name: ');
+    String name = stdin.readLineSync()!;
+    Shelf newshelf = Shelf(id: maxmaShelfId, name: name, bookId: []);
+    shelf.add(newshelf);
+    selectedShelf = newshelf;
+  } else {
+    selectedShelf = shelf.firstWhere((sh) {
+      return sh.name == shelfName;
+    });
+  }
   for (Author a in author) {
-    print('${a.id},${a.firstName},${a.lastName}');
+    print('Author iD : ${a.id},${a.firstName},${a.lastName}');
   }
   stdout.write('Enter author ID or type (add): ');
-  String input = stdin.readLineSync()!;
+  String input = stdin.readLineSync()!.toLowerCase();
   int? authorId = int.tryParse(input);
   if (authorId != null) {
     stdout.write('book name: ');
@@ -132,6 +153,7 @@ void addItem(List<Book> book, List<Author> author) {
     // int lastId = book.last.id + 1;
     int maxBookId = MaxbookId(book);
     book.add(Book(name: name, id: maxBookId, authorId: authorId));
+    selectedShelf.bookId!.add(maxBookId);
   } else {
     stdout.write('book name: ');
     String name = stdin.readLineSync()!;
@@ -147,29 +169,37 @@ void addItem(List<Book> book, List<Author> author) {
       Author(id: maxAuthorId, firstName: firstName, lastName: lastName),
     );
     book.add(Book(name: name, id: maxBookId, authorId: maxAuthorId));
+    selectedShelf.bookId!.add(maxBookId);
   }
-  printBookAndAuthor(book, author);
+  printBookWithShelves(book, author, shelf);
+  // printBookAndAuthor(book, author,);
 }
 
-void removeItem(List<Book> book) {
+void removeItem(List<Book> book, List<Shelf> shelf, List<Author> author) {
   stdout.write('id: ');
   int id = int.parse(stdin.readLineSync()!);
+  for (Shelf sh in shelf) {
+    sh.bookId!.removeWhere((bookId) {
+      return bookId == id;
+    });
+  }
   book.removeWhere((book) {
     return book.id == id;
   });
-  print(book);
+  printBookWithShelves(book, author, shelf);
+  // print(book);
 }
 
 void editItem(List<Book> book, List<Author> author) {
   stdout.write('id: ');
   int id = int.parse(stdin.readLineSync()!);
+
   Book result = book.firstWhere((book) {
     return book.id == id;
   });
   Author resultAuthor = author.firstWhere((a) {
     return a.id == result.authorId;
   });
-
   stdout.write('book name: ');
   String name = stdin.readLineSync()!;
   stdout.write('Author\'s firstName: ');
@@ -186,35 +216,61 @@ void editItem(List<Book> book, List<Author> author) {
   //   });
   //   print('${book.id}-${book.name} -${a1.firstName}${a1.lastName}');
   // }
+
   printBookAndAuthor(book, author);
 }
 
-void searchItem(List<Book> book, List<Author> author) {
+void searchItem(List<Book> book, List<Author> author, List<Shelf> shelf) {
   stdout.write('book name or Author\'s name:');
   String name = stdin.readLineSync()!;
   List<Book> result = book.where((book) {
     return book.name.toLowerCase().contains(name.toLowerCase());
   }).toList();
+  List<Author> resultAuthor = author.where((a) {
+    return a.firstName.toLowerCase().contains(name.toLowerCase()) ||
+        a.lastName!.toLowerCase().contains(name.toLowerCase());
+  }).toList();
+  List<Shelf> resultShelf = shelf.where((sh) {
+    return sh.name.toLowerCase().contains(name.toLowerCase());
+  }).toList();
   if (result.isNotEmpty) {
     for (Book b in result) {
+      int bookId = b.id;
       int authorId1 = b.authorId!;
       Author a1 = author.firstWhere((a) {
         return authorId1 == a.id;
       });
-      print('${b.id},${b.name}-${a1.firstName}${a1.lastName}');
+      Shelf sh1 = shelf.firstWhere((sh) {
+        return sh.bookId!.contains(bookId);
+      });
+      print('${sh1.name}${b.id},${b.name}-${a1.firstName}${a1.lastName}');
     }
-  } else {
-    List<Author> resultAuthor = author.where((a) {
-      return a.firstName.toLowerCase().contains(name.toLowerCase()) ||
-          a.lastName!.toLowerCase().contains(name.toLowerCase());
-    }).toList();
+  } else if (resultAuthor.isNotEmpty) {
     for (Author a in resultAuthor) {
       int authorId = a.id;
       List<Book> b1 = book.where((b) {
         return authorId == b.authorId;
       }).toList();
-      for (Book book in b1)
-        print('${book.id}-${book.name}${a.firstName},${a.lastName}');
+      for (Book book in b1) {
+        int bookId = book.id;
+        Shelf sh1 = shelf.firstWhere((sh) {
+          return sh.bookId!.contains(bookId);
+        });
+        print('${sh1.name}${book.id}-${book.name}${a.firstName},${a.lastName}');
+      }
+    }
+  } else if (resultShelf.isNotEmpty) {
+    for (Shelf sh in resultShelf) {
+      List<int>? bookId = sh.bookId;
+      List<Book> b2 = book.where((b) {
+        return bookId!.contains(b.id);
+      }).toList();
+      for (Book b in b2) {
+        Author a1 = author.firstWhere((a) {
+          return b.authorId == a.id;
+        });
+        print('${sh.name} ${b.id} ${b.name} ${a1.firstName} ${a1.lastName}');
+      }
     }
   }
 }
@@ -226,6 +282,18 @@ void printBookAndAuthor(List<Book> book, List<Author> author) {
     });
     print('${b.id}-${b.name}-${a1.firstName}-${a1.lastName} ');
   }
+}
+
+void editShelf(List<Shelf> shelf, List<Book> book, List<Author> author) {
+  stdout.write('shelf name: ');
+  String name = stdin.readLineSync()!;
+  Shelf result = shelf.firstWhere((sh) {
+    return sh.name == name;
+  });
+  stdout.write('rename: ');
+  String rename = stdin.readLineSync()!;
+  result.name = rename;
+  printBookWithShelves(book, author, shelf);
 }
 
 void printBookWithShelves(
@@ -292,6 +360,16 @@ int MaxbookId(List<Book> book) {
   for (Book b in book) {
     if (b.id > maxId) {
       maxId = b.id;
+    }
+  }
+  return maxId + 1;
+}
+
+int MaxShelfId(List<Shelf> shelf) {
+  int maxId = 0;
+  for (Shelf sh in shelf) {
+    if (sh.id > maxId) {
+      maxId = sh.id;
     }
   }
   return maxId + 1;
